@@ -66,7 +66,7 @@ void Option::unhighlight()
 void Option::select()
 {
     selected = true;
-    box.setFillColor(sf::Color::Blue);
+    box.setFillColor(color_selected);
     text.setFillColor(color_dark);
 }
 
@@ -87,6 +87,15 @@ void Option::move(int factor)
 {
     box.move(sf::Vector2f(0.f, box.getSize().y * factor));
     text.move(sf::Vector2f(0.f, box.getSize().y * factor));
+}
+
+void Option::refresh()
+{
+    if(highlighted) highlight();
+    else{
+        if(selected) select();
+        else unhighlight();
+    }
 }
 
 Selector::Selector(sf::Font& font, std::vector<std::string> ts, sf::Vector2f pos)
@@ -225,4 +234,21 @@ void Selector::draw(sf::RenderTarget& target, sf::RenderStates states) const
             target.draw(options[i], states);
         }
     }
+}
+
+void Selector::setColors(sf::Color nlight, sf::Color ndark, sf::Color nselect)
+{
+    for(auto& o : options){
+        o.color_light = nlight;
+        o.color_dark = ndark;
+        o.color_selected = nselect;
+
+        o.refresh();
+    }
+
+    selected.color_light = nlight;
+    selected.color_dark = ndark;
+    selected.color_selected = nselect;
+
+    selected.refresh();
 }

@@ -28,7 +28,8 @@ struct Option : public sf::Drawable{
     bool isSelected();
 
     sf::Color color_light{ sf::Color(210, 190, 185) };
-    sf::Color color_dark{ sf::Color(40, 70, 60) };
+    sf::Color color_dark{ sf::Color(50, 70, 60) };
+    sf::Color color_selected{ sf::Color(160, 170, 210) };
 
     void highlight();
     void unhighlight();
@@ -38,6 +39,8 @@ struct Option : public sf::Drawable{
 
     void setPosition(sf::Vector2f pos);
     void move(int factor);
+
+    void refresh(); //for tracking color changes
 };
 
 class Selector : public sf::Drawable{
@@ -51,6 +54,8 @@ public:
     void clickLeft();
 
     void scroll(float delta);
+
+    void setColors(sf::Color nlight, sf::Color ndark, sf::Color nselect);
 
 private:
     std::vector<Option> options;
