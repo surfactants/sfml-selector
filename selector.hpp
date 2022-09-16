@@ -3,88 +3,77 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
-template<typename T>
+#include <type_traits>
+
 struct Option : public sf::Drawable{
     Option() = default;
 
-    Option(T t, sf::Font& font)
-    : data{ t }
-    {
-        text.setFont(font);
-    }
+    Option(std::string t, sf::Font& font);
 
-    T data;
+    std::string data;
 
     sf::RectangleShape box;
     sf::Text text;
 
-    void setData(T t)
-    {
-        data = t;
-        text.setString(data);
-    }
+    void setData(std::string t);
 
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        target.draw(box, states);
-        target.draw(text, states);
-    }
+    void checkMouse(sf::Vector2f mpos);
 
-    void checkMouse(sf::Vector2f mpos)
-    {
-    }
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+
+    bool highlighted{ false };
+    bool selected{ false };
+
+    bool isHighlighted();
+    bool isSelected();
+
+    sf::Color color_light{ sf::Color(210, 190, 185) };
+    sf::Color color_dark{ sf::Color(40, 70, 60) };
+
+    void highlight();
+    void unhighlight();
+
+    void select();
+    void unselect();
+
+    void setPosition(sf::Vector2f pos);
+    void move(int factor);
 };
 
-template<typename T>
 class Selector : public sf::Drawable{
 public:
-    Selector(sf::Font& font, std::vector<T> ts)
-    {
-        for(const auto& t : ts){
-            options.push_back(Option(t, font));
-        }
-    }
+    Selector(sf::Font& font, std::vector<std::string> ts);
 
-    void checkMouse(sf::Vector2f mpos)
-    {
-        if(open)
-        {
-            if(frame.getGlobalBounds().contains(mpos)){
-                for(auto& o : options){
-                    o.checkMouse(mpos);
-                }
-            }
-        }
-    }
+    void checkMouse(sf::Vector2f mpos);
 
-    T getSelection()
-    {
-        return selected.data;
-    }
+    std::string getSelection();
+
+    void clickLeft();
+
+    void setPosition(sf::Vector2f pos);
+
+    void scroll(float delta);
 
 private:
-    std::vector<Option<T>> options;
+    std::vector<Option> options;
 
-    Option<T> selected;
+    bool moused{ false };
+
+    Option selected;
+    unsigned int select_index{ 0 };
 
     bool open{ false };
 
     sf::RectangleShape frame;
 
     unsigned int render_start{ 0 };
-    unsigned int render_end{ 0 };
-    unsigned int render_distance{ 5 };
+    unsigned int render_end{ 4 };
 
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        if(open){
-            target.draw(selected, states);
-        }
-        else{
-            target.draw(frame, states);
-            for(unsigned int i = render_start; i <= render_end; ++i){
-                target.draw(options[i], states);
-            }
-        }
-    }
+    void setOpen();
+
+    void setClosed();
+
+    void resetRenderIndices();
+
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 };
