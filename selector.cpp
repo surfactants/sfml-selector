@@ -1,12 +1,14 @@
 #include "selector.hpp"
 #include <iostream>
 
-Option::Option(std::string t, sf::Font& font)
+Option::Option(std::string t, sf::Font& font, sf::Vector2f size, sf::Vector2f pos)
 {
     text.setFont(font);
     setData(t);
 
-    box.setSize(sf::Vector2f(96.f, 96.f));
+    box.setSize(size);
+
+    setPosition(pos);
 
     unhighlight();
 }
@@ -87,10 +89,14 @@ void Option::move(int factor)
     text.move(sf::Vector2f(0.f, box.getSize().y * factor));
 }
 
-Selector::Selector(sf::Font& font, std::vector<std::string> ts)
+Selector::Selector(sf::Font& font, std::vector<std::string> ts, sf::Vector2f pos)
 {
+    selected.setPosition(pos);
+
     for(const auto& t : ts){
-        options.push_back(Option(t, font));
+        options.push_back(Option(t, font, option_size, pos));
+        options.back().setPosition(pos);
+        pos.y += option_size.y;
     }
 
     options.front().select();
@@ -162,17 +168,6 @@ void Selector::resetRenderIndices()
     if(select_index < render_start){
         while(select_index < render_start){
         }
-    }
-}
-
-void Selector::setPosition(sf::Vector2f pos)
-{
-    selected.setPosition(pos);
-
-    for(auto& o : options){
-        o.setPosition(pos);
-        //pos.y += option_size.y;
-        pos.y += 96.f;
     }
 }
 

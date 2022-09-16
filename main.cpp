@@ -11,9 +11,7 @@ int main()
 
     std::vector<std::string> s{ "lorem", "ipsum", "test", "whatever", "who cares", "69420", "hehe", "test2" };
 
-    Selector selector(font, s);
-
-    selector.setPosition(sf::Vector2f(48.f, 48.f));
+    Selector selector(font, s, sf::Vector2f(48.f, 48.f));
 
     while(window.isOpen()){
         sf::Event event;
@@ -36,7 +34,6 @@ int main()
                 }
             }
             else if(event.type == sf::Event::MouseWheelScrolled){
-                std::cout << event.mouseWheelScroll.delta << '\n';
                 selector.scroll(event.mouseWheelScroll.delta);
             }
         }

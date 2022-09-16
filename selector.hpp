@@ -8,7 +8,7 @@
 struct Option : public sf::Drawable{
     Option() = default;
 
-    Option(std::string t, sf::Font& font);
+    Option(std::string t, sf::Font& font, sf::Vector2f size, sf::Vector2f pos);
 
     std::string data;
 
@@ -42,7 +42,7 @@ struct Option : public sf::Drawable{
 
 class Selector : public sf::Drawable{
 public:
-    Selector(sf::Font& font, std::vector<std::string> ts);
+    Selector(sf::Font& font, std::vector<std::string> ts, sf::Vector2f pos);
 
     void checkMouse(sf::Vector2f mpos);
 
@@ -50,12 +50,12 @@ public:
 
     void clickLeft();
 
-    void setPosition(sf::Vector2f pos);
-
     void scroll(float delta);
 
 private:
     std::vector<Option> options;
+
+    sf::Vector2f option_size{ sf::Vector2f(128.f, 48.f) };
 
     bool moused{ false };
 
