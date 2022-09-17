@@ -1,10 +1,9 @@
 #include "selector.hpp"
-#include <iostream>
 
-Option::Option(std::string t, sf::Font& font, sf::Vector2f size, sf::Vector2f pos)
+Option::Option(std::string n_data, sf::Font& font, sf::Vector2f size, sf::Vector2f pos)
 {
     text.setFont(font);
-    setData(t);
+    setData(n_data);
 
     box.setSize(size);
 
@@ -13,9 +12,9 @@ Option::Option(std::string t, sf::Font& font, sf::Vector2f size, sf::Vector2f po
     unhighlight();
 }
 
-void Option::setData(std::string t)
+void Option::setData(std::string n_data)
 {
-    data = t;
+    data = n_data;
     text.setString(data);
 }
 
@@ -49,8 +48,8 @@ bool Option::isSelected()
 void Option::highlight()
 {
     highlighted = true;
-    box.setFillColor(color_light);
-    text.setFillColor(color_dark);
+    box.setFillColor(palette.color_light);
+    text.setFillColor(palette.color_dark);
 }
 
 void Option::unhighlight()
@@ -58,16 +57,16 @@ void Option::unhighlight()
     highlighted = false;
     if(selected) select();
     else{
-        box.setFillColor(color_dark);
-        text.setFillColor(color_light);
+        box.setFillColor(palette.color_dark);
+        text.setFillColor(palette.color_light);
     }
 }
 
 void Option::select()
 {
     selected = true;
-    box.setFillColor(color_selected);
-    text.setFillColor(color_dark);
+    box.setFillColor(palette.color_selected);
+    text.setFillColor(palette.color_selected_text);
 }
 
 void Option::unselect()
@@ -89,6 +88,12 @@ void Option::move(int factor)
     text.move(sf::Vector2f(0.f, box.getSize().y * factor));
 }
 
+void Option::move(float distance)
+{
+    box.move(sf::Vector2f(0.f, distance));
+    text.move(sf::Vector2f(0.f, distance));
+}
+
 void Option::refresh()
 {
     if(highlighted) highlight();
@@ -98,18 +103,35 @@ void Option::refresh()
     }
 }
 
-Selector::Selector(sf::Font& font, std::vector<std::string> ts, sf::Vector2f pos)
+void Option::changePalette(Selector_Palette n_palette)
+{
+    palette = n_palette;
+    refresh();
+}
+
+Selector::Selector(sf::Font& font, std::vector<std::string> data, sf::Vector2f pos)
 {
     selected.setPosition(pos);
 
-    for(const auto& t : ts){
-        options.push_back(Option(t, font, option_size, pos));
+    frame.setPosition(pos);
+    frame.setFillColor(sf::Color(69, 69, 69));
+
+    setOptionSize(option_size);
+
+    for(const auto& d : data){
+        options.push_back(Option(d, font, option_size, pos));
         options.back().setPosition(pos);
         pos.y += option_size.y;
     }
 
     options.front().select();
     selected = options.front();
+    scrollbar.setFillColor(sf::Color(169, 169, 169));
+
+
+    setRenderDistance(render_distance);
+
+    setScrollbar();
 }
 
 void Selector::checkMouse(sf::Vector2f mpos)
@@ -134,14 +156,15 @@ std::string Selector::getSelection()
 void Selector::clickLeft()
 {
     if(open){
-        for(unsigned int i = render_start; i <= render_end; ++i){
-            if(options[i].isHighlighted() && !options[i].isSelected()){
-                std::cout << "changing selection from " << select_index << " to " << i;
-                options[select_index].unselect();
-                options[i].select();
-                select_index = i;
-                selected.setData(options[i].data);
-                break;
+        if(moused){
+            for(unsigned int i = render_start; i <= render_start + render_distance; ++i){
+                if(options[i].isHighlighted() && !options[i].isSelected()){
+                    options[select_index].unselect();
+                    options[i].select();
+                    select_index = i;
+                    selected.setData(options[i].data);
+                    break;
+                }
             }
         }
 
@@ -160,23 +183,17 @@ void Selector::resetRenderIndices()
     int factor = 0;
     while(select_index < render_start){
         render_start--;
-        render_end--;
         factor++;
     }
 
     while(select_index > render_start){
-        if(render_end == options.size() - 1) break;
+        if(render_start + render_distance == options.size() - 1) break;
         render_start++;
-        render_end++;
         factor--;
     }
 
     for(auto& o : options){
         o.move(factor);
-    }
-    if(select_index < render_start){
-        while(select_index < render_start){
-        }
     }
 }
 
@@ -193,24 +210,19 @@ void Selector::setClosed()
 void Selector::scroll(float delta)
 {
     if(open){
-        std::cout << "scrolling! " << delta << '\n';
         bool upward = (delta > 0.f);
         int factor = 1;
         if(upward){
-            std::cout << "\tupward\n";
             if(render_start > 0){
-                std::cout << "\tcan\n";
                 render_start--;
-                render_end--;
+                placeScrollbar();
             }
             else return;
         }
         else{
-            std::cout << "\tdownward\n";
-            if(render_end < options.size() - 1){
-                std::cout << "\tcan\n";
+            if(render_start + render_distance < options.size() - 1){
                 render_start++;
-                render_end++;
+                placeScrollbar();
                 factor = -1;
             }
             else return;
@@ -230,25 +242,111 @@ void Selector::draw(sf::RenderTarget& target, sf::RenderStates states) const
     }
     else{
         target.draw(frame, states);
-        for(unsigned int i = render_start; i <= render_end; ++i){
+        for(unsigned int i = render_start; i <= render_start + render_distance; ++i){
             target.draw(options[i], states);
         }
+        target.draw(scrollbar, states);
     }
 }
 
-void Selector::setColors(sf::Color nlight, sf::Color ndark, sf::Color nselect)
+void Selector::setColors(sf::Color n_light, sf::Color n_dark, sf::Color n_selected, sf::Color n_selected_text)
 {
-    for(auto& o : options){
-        o.color_light = nlight;
-        o.color_dark = ndark;
-        o.color_selected = nselect;
+    palette = Selector_Palette(n_light, n_dark, n_selected, n_selected_text);
 
-        o.refresh();
+    selected.changePalette(palette);
+
+    for(auto& o : options){
+        o.changePalette(palette);
+    }
+}
+
+void Selector::setRenderDistance(unsigned int ndistance)
+{
+    if(ndistance >= options.size())
+    {
+        render_distance = options.size() - 1;
+        render_start = 0;
+    }
+    else{
+        render_distance = ndistance;
+
+        while(render_start + render_distance >= options.size() - 1)
+        {
+            render_start--;
+        }
     }
 
-    selected.color_light = nlight;
-    selected.color_dark = ndark;
-    selected.color_selected = nselect;
+    frame.setSize(sf::Vector2f(option_size.x + scrollbar_size_x, option_size.y * (render_distance + 1)));
 
-    selected.refresh();
+    setScrollbar();
+}
+
+void Selector::setScrollbar()
+{
+    float size_y = ((static_cast<float>(render_distance + 1)) / (options.size() - 1));
+    size_y *= frame.getSize().y;
+
+    scrollbar.setSize(sf::Vector2f(scrollbar_size_x, size_y));
+
+    placeScrollbar();
+}
+
+void Selector::placeScrollbar()
+{
+    float index = static_cast<float>(render_start) / (options.size() - 1 - render_distance);
+
+    float pos_y = frame.getPosition().y + (index * (frame.getSize().y - scrollbar.getSize().y));
+
+    scrollbar.setPosition(sf::Vector2f(frame.getPosition().x + frame.getSize().x - scrollbar_size_x, pos_y));
+}
+
+void Selector::setFontSize(unsigned int f_size, bool dynamic_resize)
+{
+    selected.text.setCharacterSize(f_size);
+
+    if(dynamic_resize)
+    {
+        calculateOptionSize();
+    }
+
+    for(auto& o : options){
+        o.text.setCharacterSize(f_size);
+    }
+}
+
+void Selector::calculateOptionSize()
+{
+    float size = selected.text.getCharacterSize();
+    float x = 64.f + (size * 3.f);
+    float y = size * 1.5f;
+    setOptionSize(sf::Vector2f(x, y));
+}
+
+void Selector::setOptionSize(sf::Vector2f nsize)
+{
+    frame.setSize(sf::Vector2f(nsize.x + scrollbar_size_x, nsize.y * (render_distance + 1)));
+
+    selected.box.setSize(nsize);
+
+    for(auto& o : options){
+        o.box.setSize(nsize);
+    }
+
+    option_size = nsize;
+
+    placeOptions();
+
+    setScrollbar();
+}
+
+void Selector::placeOptions()
+{
+    sf::Vector2f pos = selected.box.getPosition();
+
+    for(auto& o : options){
+        o.setPosition(pos);
+        pos.y += option_size.y;
+        o.move((int)render_start);
+
+    }
 }
