@@ -325,9 +325,12 @@ void Selector::resetRenderIndices()
 
     factor = render_start - select_index;
     render_start = select_index;
-    while(render_start >= options.size() - render_distance){
-        render_start--;
-        factor++;
+
+    int threshold = options.size() - render_distance - 1;
+    if(render_start >= threshold){
+        int diff = threshold - render_start;
+        render_start = threshold;
+        factor -= diff;
     }
 
     for(auto& o : options){
