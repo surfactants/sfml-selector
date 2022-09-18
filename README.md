@@ -1,3 +1,5 @@
 # selector
 
-dropdown selection tool
+UI tool for dropdown selection menus.
+
+![dropdown selector](img/screenshot.png)
