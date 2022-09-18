@@ -36,7 +36,7 @@ public:
     /// \param \b size -> box
     /// \param \b pos -> box, text
     ///
-    Option(std::string n_data, sf::Font& font, sf::Vector2f size, sf::Vector2f pos);
+    Option(std::string n_data, sf::Font& font, sf::Vector2f size, sf::Vector2f pos, Selector_Palette* n_palette);
 
     ////////////////////////////////////////////////////
     /// \brief Changes stored value
@@ -46,45 +46,11 @@ public:
     void setData(std::string n_data);
 
     ////////////////////////////////////////////////////
-    /// \brief Sets highlight state according to mouse position
+    /// \brief Re-sets colors after palette change
     ///
-    /// \param \b mpos Mouse position
+    /// \param \b n_palette -> palette
     ///
-    void checkMouse(sf::Vector2f mpos);
-
-    ////////////////////////////////////////////////////
-    /// \brief Returns mouseover state
-    ///
-    /// \return \b bool highlighted
-    ///
-    bool isHighlighted();
-
-    ////////////////////////////////////////////////////
-    /// \brief Returns selection state
-    ///
-    /// \return \b bool selected
-    ///
-    bool isSelected();
-
-    ////////////////////////////////////////////////////
-    /// \brief Sets colors to indicate mouseover
-    ///
-    void highlight();
-
-    ////////////////////////////////////////////////////
-    /// \brief Sets colors to default
-    ///
-    void unhighlight();
-
-    ////////////////////////////////////////////////////
-    /// \brief Sets colors to indicate selection
-    ///
-    void select();
-
-    ////////////////////////////////////////////////////
-    /// \brief Reverts colors to highlight state
-    ///
-    void unselect();
+    void refresh();
 
     ////////////////////////////////////////////////////
     /// \brief Places elements
@@ -101,11 +67,45 @@ public:
     void move(int factor);
 
     ////////////////////////////////////////////////////
-    /// \brief Moves by a fixed value
+    /// \brief Sets highlight state according to mouse position
     ///
-    /// \param \b distance displacement value
+    /// \param \b mpos Mouse position
     ///
-    void move(float distance);
+    void checkMouse(sf::Vector2f mpos);
+
+    ////////////////////////////////////////////////////
+    /// \brief Returns mouseover state
+    ///
+    /// \return \b bool highlighted
+    ///
+    bool isHighlighted();
+
+    ////////////////////////////////////////////////////
+    /// \brief Sets colors to indicate mouseover
+    ///
+    void highlight();
+
+    ////////////////////////////////////////////////////
+    /// \brief Sets colors to default
+    ///
+    void unhighlight();
+
+    ////////////////////////////////////////////////////
+    /// \brief Returns selection state
+    ///
+    /// \return \b bool selected
+    ///
+    bool isSelected();
+
+    ////////////////////////////////////////////////////
+    /// \brief Sets colors to indicate selection
+    ///
+    void select();
+
+    ////////////////////////////////////////////////////
+    /// \brief Reverts colors to highlight state
+    ///
+    void unselect();
 
     ///Value stored in the option.
     std::string data;
@@ -117,14 +117,7 @@ public:
     sf::Text text;
 
     ///Color palette
-    Selector_Palette palette;
-
-    ////////////////////////////////////////////////////
-    /// \brief Changes the color palette
-    ///
-    /// \param \b n_palette -> palette
-    ///
-    void changePalette(Selector_Palette n_palette);
+    Selector_Palette* palette;
 
 private:
     ///Tracks mouseover state
@@ -132,11 +125,6 @@ private:
 
     ///Tracks click state
     bool selected{ false };
-
-    ////////////////////////////////////////////////////
-    /// \brief Resets for color changes
-    ///
-    void refresh();
 
     ////////////////////////////////////////////////////
     /// \brief Draws elements to the render target
@@ -160,85 +148,140 @@ public:
     Selector(sf::Font& font, std::vector<std::string> data, sf::Vector2f pos);
 
     ///////////////////////////////////////////////
-    /// \brief
+    /// \brief Sets Option box size
     ///
-    void checkMouse(sf::Vector2f mpos);
+    /// \param \b n_size -> option_size
+    ///
+    void setOptionSize(sf::Vector2f n_size);
 
     ///////////////////////////////////////////////
-    /// \brief
+    /// \brief Changes font size
     ///
-    std::string getSelection();
-
-    ///////////////////////////////////////////////
-    /// \brief
-    ///
-    void clickLeft();
-
-    ///////////////////////////////////////////////
-    /// \brief
-    ///
-    void scroll(float delta);
-
-    ///////////////////////////////////////////////
-    /// \brief Reconstructs the palette and passes it to the options
-    ///
-    void setColors(sf::Color n_light, sf::Color n_dark, sf::Color n_selected, sf::Color n_selected_text);
-
-    ///////////////////////////////////////////////
-    /// \brief Sets render distance (options displayed - 1)
-    /// If this value is too large, the distance will be set by options.size
-    ///
-    void setRenderDistance(unsigned int ndistance);
-
-    ///////////////////////////////////////////////
-    /// \brief
+    /// \param \b f_size new font size
+    /// \param \b dynamic_resize whether to reset option_size based on f_size (defaults to true)
     ///
     void setFontSize(unsigned int f_size, bool dynamic_resize = true);
 
     ///////////////////////////////////////////////
-    /// \brief
+    /// \brief Sets render distance (options displayed - 1)
     ///
-    void setOptionSize(sf::Vector2f nsize);
+    /// \param \b ndistance if this value is too large, the distance will be set by options.size
+    ///
+    void setRenderDistance(unsigned int ndistance);
+
+    ///////////////////////////////////////////////
+    /// \brief Reconstructs the palette and passes it to the options
+    ///
+    /// \param 4 palette colors (light, dark, selected, selected_text)
+    ///
+    void setColors(sf::Color n_light, sf::Color n_dark, sf::Color n_selected, sf::Color n_selected_text);
+
+    ///////////////////////////////////////////////
+    /// \brief Returns the selected option value
+    ///
+    std::string getSelection();
+
+    ///////////////////////////////////////////////
+    /// \brief Checks and sets highlight states
+    ///
+    /// \param \b mpos mouse position
+    ///
+    void checkMouse(sf::Vector2f mpos);
+
+    ///////////////////////////////////////////////
+    /// \brief Parses left click
+    ///
+    void clickLeft();
+
+    ///////////////////////////////////////////////
+    /// \brief Moves options if the selector is open and moused, and if the movement is in bounds
+    ///
+    /// \param \b delta event.mouseWheelScroll.delta
+    ///
+    void scroll(float delta);
 
 private:
-    std::vector<Option> options;
-
-    Selector_Palette palette;
-
-    sf::Vector2f option_size{ sf::Vector2f(192.f, 48.f) };
-
-    bool moused{ false };
-
-    Option selected;
-    unsigned int select_index{ 0 };
-
-    bool open{ false };
-
+    ///Holds the open menu and scrollbar
     sf::RectangleShape frame;
 
+    ///Options in dropdown menu
+    std::vector<Option> options;
+
+    ///Option displayed when closed
+    Option selected;
+
+    ///Option box size
+    sf::Vector2f option_size{ sf::Vector2f(192.f, 48.f) };
+
+    ///Currently selected option (for unselecting)
+    unsigned int select_index{ 0 };
+
+    ///First option to render when open
     unsigned int render_start{ 0 };
+
+    ///Number of options to render when open (INDEXED, ACTUAL COUNT IS THIS + 1)
     unsigned int render_distance{ 4 };
 
-    void setOpen();
+    ///Mouseover
+    bool moused{ false };
 
-    void setClosed();
+    ///Is the menu open?
+    bool open{ false };
 
-    void resetRenderIndices();
-
+    ///Tracks scroll bounds
     sf::RectangleShape scrollbar;
+
+    ///... Scrollbar x size
     float scrollbar_size_x{ 16.f };
 
-    void setScrollbar();
-    void placeScrollbar();
-
-    void calculateOptionSize();
-
-    void placeOptions();
-
+    ///Option color palette
     Selector_Palette palette;
 
     ////////////////////////////////////////////////////
+    /// \brief Opens the drop-down
+    /// Internal
+    ///
+    void setOpen();
+
+    ////////////////////////////////////////////////////
+    /// \brief Closes the drop-down
+    /// Internal
+    ///
+    void setClosed();
+
+    ////////////////////////////////////////////////////
+    /// \brief Resizes the scrollbar
+    /// Internal
+    ///
+    void setScrollbar();
+
+    ////////////////////////////////////////////////////
+    /// \brief Repositions the scrollbar
+    /// Internal
+    ///
+    void placeScrollbar();
+
+    ////////////////////////////////////////////////////
+    /// \brief Moves render_start to selected option (or as close as possible)
+    /// Internal
+    ///
+    void resetRenderIndices();
+
+    ////////////////////////////////////////////////////
+    /// \brief Sets option_size based on font size
+    /// Internal
+    ///
+    void calculateOptionSize();
+
+    ////////////////////////////////////////////////////
+    /// \brief Sets option positions based on their size
+    /// Internal
+    ///
+    void placeOptions();
+
+    ////////////////////////////////////////////////////
     /// \brief Draws elements to the render target
+    /// Internal
     ///
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 };
