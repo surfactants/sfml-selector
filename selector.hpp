@@ -11,7 +11,7 @@
 struct Selector_Palette{
     Selector_Palette(sf::Color n_light = sf::Color(210, 190, 185),
             sf::Color n_dark = sf::Color(50, 70, 60),
-            sf::Color n_selected = sf::Color(160, 170, 210),
+            sf::Color n_selected = sf::Color(150, 130, 190),
             sf::Color n_selected_text = sf::Color(240, 240, 240))
         : color_light{ n_light }, color_dark{ n_dark }, color_selected{ n_selected }, color_selected_text{ n_selected_text }{}
 
